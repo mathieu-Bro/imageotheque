@@ -1,23 +1,14 @@
 async function loadComponent(targetId, filePath) {
   const target = document.getElementById(targetId);
-
-  if (!target) {
-    console.warn("Zone introuvable :", targetId);
-    return;
-  }
+  if (!target) return;
 
   try {
     const response = await fetch(filePath);
+    if (!response.ok) return;
 
-    if (!response.ok) {
-      console.warn("Composant introuvable :", filePath);
-      return;
-    }
-
-    const html = await response.text();
-    target.innerHTML = html;
-  } catch (error) {
-    console.error("Erreur de chargement du composant :", filePath, error);
+    target.innerHTML = await response.text();
+  } catch (e) {
+    console.error(e);
   }
 }
 

@@ -1,3 +1,6 @@
+// ⚠️ HTTP obligatoire pour Free
+const FREE_BASE_URL = "http://mathpro.free.fr/";
+
 let galleryItems = [];
 
 async function loadGalleryData() {
@@ -5,17 +8,17 @@ async function loadGalleryData() {
     const response = await fetch("data/index_site.json");
 
     if (!response.ok) {
-      throw new Error("Impossible de charger data/index_site.json");
+      throw new Error("Impossible de charger index_site.json");
     }
 
     galleryItems = await response.json();
 
     if (!Array.isArray(galleryItems)) {
-      console.warn("Le fichier index_site.json ne contient pas un tableau.");
       galleryItems = [];
     }
+
   } catch (error) {
-    console.error("Erreur de chargement des données :", error);
+    console.error("Erreur JSON :", error);
     galleryItems = [];
   }
 }
@@ -33,79 +36,65 @@ function renderGallery(items) {
   }
 
   if (!items || items.length === 0) {
-    gallery.innerHTML = '<p class="empty-message">Aucun élément à afficher.</p>';
+    gallery.innerHTML = '<p class="empty-message">Aucun élément.</p>';
     return;
   }
 
   items.forEach(function (item) {
-    const card = createGalleryCard(item);
-    gallery.appendChild(card);
+    gallery.appendChild(createCard(item));
   });
 }
 
-function createGalleryCard(item) {
+function createCard(item) {
   const article = document.createElement("article");
   article.className = "gallery-card";
 
-  const mediaLink = document.createElement("a");
-  mediaLink.className = "media-link";
-  mediaLink.href = getHighResolutionPath(item);
-  mediaLink.target = "_blank";
-  mediaLink.rel = "noopener noreferrer";
+  const link = document.createElement("a");
+  link.className = "media-link";
+  link.href = getHR(item);
+  link.target = "_blank";
 
   if (item.type === "video") {
     const video = document.createElement("video");
-    video.src = item.path;
-    video.controls = false;
+    video.src = getMedia(item);
     video.muted = true;
     video.preload = "metadata";
     video.className = "gallery-media";
-
-    mediaLink.appendChild(video);
-  } else if (item.type === "image") {
+    link.appendChild(video);
+  } else {
     const img = document.createElement("img");
-    img.src = item.path;
-    img.alt = item.displayName || item.fileName || "Photo";
+    img.src = getMedia(item);
     img.loading = "lazy";
     img.className = "gallery-media";
-
-    mediaLink.appendChild(img);
-  } else {
-    const placeholder = document.createElement("div");
-    placeholder.className = "file-placeholder";
-    placeholder.textContent = item.extension || "fichier";
-
-    mediaLink.appendChild(placeholder);
+    link.appendChild(img);
   }
 
   const body = document.createElement("div");
   body.className = "gallery-card-body";
 
   const title = document.createElement("h3");
-  title.textContent = item.displayName || item.fileName || "Sans titre";
-
-  const meta = document.createElement("p");
-  meta.textContent = item.folder || "";
+  title.textContent = item.displayName || item.fileName;
 
   body.appendChild(title);
-  body.appendChild(meta);
 
-  article.appendChild(mediaLink);
+  article.appendChild(link);
   article.appendChild(body);
 
   return article;
 }
 
-function getHighResolutionPath(item) {
-  if (!item || !item.path) return "#";
+function getMedia(item) {
+  return FREE_BASE_URL + item.path;
+}
 
+function getHR(item) {
   if (item.type === "image") {
-    return item.path.replace("photos/", "photos_HR/");
+    return FREE_BASE_URL + item.path.replace("photos/", "photos_HR/");
   }
 
   if (item.type === "video") {
-    return item.path.replace("videos/", "videos_HR/");
+    return FREE_BASE_URL + item.path.replace("videos/", "videos_HR/");
   }
 
-  return item.path;
+  return getMedia(item);
 }

@@ -1,4 +1,4 @@
-const BASE = "http://mathpro.free.fr/";
+const BASE = "https://pub-db2a1779ddaf4b0e84459e8e958e34de.r2.dev/";
 const LOW_BASE = BASE + "photos/";
 const HR_BASE  = BASE + "photos_HR/";
 

@@ -1,4 +1,4 @@
-const INDEX_FILE = "http://mathpro.free.fr/data/index_site.json";
+const INDEX_FILE = "data/index_site.json";
 
 async function init(){
 

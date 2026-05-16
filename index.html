@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Photos famille Brossard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="assets/css/style.css?v=iphone-scroll1">
+</head>
+
+<body class="has-bg">
+
+<div id="header"></div>
+<div id="filters"></div>
+
+<main>
+  <div id="count" class="count">Chargement...</div>
+  <div id="grid" class="grid"></div>
+  <div id="gallerySentinel" class="gallery-sentinel">Chargement des photos suivantes…</div>
+</main>
+
+<div id="footer"></div>
+
+<div id="lightbox" class="lightbox">
+  <button class="lightbox-close" type="button" onclick="closeLightbox()">×</button>
+
+  <button class="lightbox-nav lightbox-prev" type="button" onclick="showPrev()">‹</button>
+
+  <div class="lightbox-stage">
+    <img id="lightboxImage" class="lightbox-image" src="" alt="">
+  </div>
+
+  <button class="lightbox-nav lightbox-next" type="button" onclick="showNext()">›</button>
+
+  <div class="lightbox-toolbar">
+    <button id="fullscreenButton" type="button" onclick="toggleFullscreen()">⛶ Plein écran</button>
+    <button id="slideshowButton" type="button" onclick="toggleSlideshow()">▶ Diaporama</button>
+
+    <label class="slideshow-duration">
+      Durée
+      <select id="slideshowDelaySelect" onchange="changeSlideshowDelay()">
+        <option value="3000">3 s</option>
+        <option value="5000" selected>5 s</option>
+        <option value="8000">8 s</option>
+        <option value="10000">10 s</option>
+        <option value="15000">15 s</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="lightbox-caption">
+    <div id="lightboxTitle"></div>
+    <div id="lightboxMeta"></div>
+  </div>
+</div>
+
+<script src="assets/js/components.js"></script>
+<script src="assets/js/gallery.js?v=iphone-scroll1"></script>
+<script src="assets/js/filters.js"></script>
+<script src="assets/js/app.js"></script>
+
+</body>
+</html>

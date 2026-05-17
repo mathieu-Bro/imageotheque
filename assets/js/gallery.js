@@ -422,16 +422,29 @@ function bindTouchGestures() {
     }
   }, { passive: true });
 
+  let lastWheelNav = 0;
+
   stage.addEventListener("wheel", e => {
     if (!document.getElementById("lightbox")?.classList.contains("open")) return;
     e.preventDefault();
-    const delta = e.deltaY < 0 ? 0.15 : -0.15;
-    SCALE = clamp(SCALE + delta, 1, 4);
-    if (SCALE === 1) {
-      PAN_X = 0;
-      PAN_Y = 0;
+
+    if (e.ctrlKey) {
+      const delta = e.deltaY < 0 ? 0.15 : -0.15;
+      SCALE = clamp(SCALE + delta, 1, 4);
+      if (SCALE === 1) {
+        PAN_X = 0;
+        PAN_Y = 0;
+      }
+      applyZoom();
+      return;
     }
-    applyZoom();
+
+    const now = Date.now();
+    if (now - lastWheelNav < 350) return;
+    lastWheelNav = now;
+
+    if (e.deltaY > 0) showNext();
+    else if (e.deltaY < 0) showPrev();
   }, { passive: false });
 }
 

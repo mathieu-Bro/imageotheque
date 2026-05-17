@@ -188,36 +188,34 @@ function getLeadingFilenameWords(name) {
 }
 
 function getItemKeywords(item) {
-  const words = [];
+  const filename = String(item.name || "");
+  const base = filename.replace(/\.[a-z0-9]{2,5}$/i, "");
+  const pos = base.indexOf("_");
 
-  // Champs keywords éventuels : on les découpe toujours en mots simples.
-  // Jamais une option du déroulant ne doit contenir un chemin ou un "/" .
-  if (Array.isArray(item.keywords)) {
-    for (const keyword of item.keywords) {
-      words.push(...splitKeywordWords(keyword));
-    }
-  }
+  // Règle : seuls les mots avant le premier _ sont des mots-clés.
+  // Exemple : cerf daguet cerises_IMG_20240704_200759.jpg
+  // => cerf, daguet, cerises
+  if (pos <= 0) return [];
 
-  // Mots au début du nom de fichier.
-  words.push(...getLeadingFilenameWords(item.name));
+  const prefix = base.substring(0, pos).trim();
+  const stop = new Set([
+    "jpg", "jpeg", "png", "gif", "webp", "mp4", "webm", "mov", "m4v", "avi",
+    "photo", "photos", "video", "videos", "image", "images", "hr", "br",
+    "img", "dsc", "scan", "copie", "copy"
+  ]);
 
-  // Noms de dossiers et sous-dossiers : chaque segment est découpé en mots simples.
-  const folders = String(item.folder || "")
-    .split(/[\\/]+/)
-    .map(part => part.trim())
-    .filter(Boolean);
-
-  for (const folder of folders) {
-    words.push(...splitKeywordWords(folder));
-  }
-
-  // Déduplication par version normalisée, en conservant le premier libellé lisible.
   const map = new Map();
+  const words = prefix
+    .split(/\s+/)
+    .map(w => w.trim())
+    .filter(w => w.length >= 2)
+    .filter(w => !/^\d+$/.test(w))
+    .filter(w => !stop.has(normalizeSearchText(w)));
+
   for (const word of words) {
-    const label = String(word || "").trim();
-    const key = normalizeSearchText(label);
+    const key = normalizeSearchText(word);
     if (!key) continue;
-    if (!map.has(key)) map.set(key, label);
+    if (!map.has(key)) map.set(key, word);
   }
 
   return [...map.values()];

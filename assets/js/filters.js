@@ -159,28 +159,68 @@ function getSearchFilteredBaseItems(force = false) {
 
 /* ================= KEYWORDS ================= */
 
-function getItemKeywords(item) {
-  const explicit = Array.isArray(item.keywords) ? item.keywords : [];
-  const values = explicit.map(k => String(k || "").trim()).filter(Boolean);
-
-  // Fallback utile avec le JSON actuel : le champ keywords peut être vide.
-  // Dans ce cas, on construit une liste de mots-clés depuis le nom de fichier et les dossiers.
-  const source = [item.name, item.folder, item.rel].filter(Boolean).join(" ");
+function splitKeywordWords(value) {
   const stop = new Set([
     "jpg", "jpeg", "png", "gif", "webp", "mp4", "webm", "mov", "m4v", "avi",
     "photo", "photos", "video", "videos", "image", "images", "hr", "br",
-    "img", "dsc", "scan", "copie", "copy"
+    "img", "dsc", "scan", "copie", "copy", "thumb", "thumbnail"
   ]);
 
-  const tokens = String(source || "")
-    .replace(/[_.+~()[\]{}-]+/g, " ")
+  return String(value || "")
+    .replace(/\.[a-z0-9]{2,5}$/i, " ")
+    .replace(/[\\/]+/g, " ")
+    .replace(/[_.+~()[\]{}\-]+/g, " ")
     .split(/\s+/)
     .map(w => w.trim())
-    .filter(w => w.length >= 3)
+    .filter(w => w.length >= 2)
     .filter(w => !/^\d+$/.test(w))
-    .filter(w => !stop.has(normalizeSearchText(w)));
+    .filter(w => !stop.has(normalizeSearchText(w)))
+    .filter(w => normalizeSearchText(w));
+}
 
-  return values.concat(tokens);
+function getLeadingFilenameWords(name) {
+  // Les mots-clés métier sont les mots placés au début du nom.
+  // On s'arrête au premier séparateur fort ou à la première année.
+  const base = String(name || "").replace(/\.[a-z0-9]{2,5}$/i, "");
+  const beforeSeparator = base.split(/\s[-–—_]\s|\s{2,}|[,;|]/)[0] || base;
+  const beforeYear = beforeSeparator.split(/\b(?:19\d{2}|20\d{2})\b/)[0] || beforeSeparator;
+  return splitKeywordWords(beforeYear);
+}
+
+function getItemKeywords(item) {
+  const words = [];
+
+  // Champs keywords éventuels : on les découpe toujours en mots simples.
+  // Jamais une option du déroulant ne doit contenir un chemin ou un "/" .
+  if (Array.isArray(item.keywords)) {
+    for (const keyword of item.keywords) {
+      words.push(...splitKeywordWords(keyword));
+    }
+  }
+
+  // Mots au début du nom de fichier.
+  words.push(...getLeadingFilenameWords(item.name));
+
+  // Noms de dossiers et sous-dossiers : chaque segment est découpé en mots simples.
+  const folders = String(item.folder || "")
+    .split(/[\\/]+/)
+    .map(part => part.trim())
+    .filter(Boolean);
+
+  for (const folder of folders) {
+    words.push(...splitKeywordWords(folder));
+  }
+
+  // Déduplication par version normalisée, en conservant le premier libellé lisible.
+  const map = new Map();
+  for (const word of words) {
+    const label = String(word || "").trim();
+    const key = normalizeSearchText(label);
+    if (!key) continue;
+    if (!map.has(key)) map.set(key, label);
+  }
+
+  return [...map.values()];
 }
 
 function rebuildKeywordDatalist() {
@@ -216,9 +256,9 @@ function itemMatchesKeyword(item, rawKeyword) {
   const keywords = getItemKeywords(item).map(k => normalizeSearchText(k)).filter(Boolean);
   if (!keywords.length) return false;
 
-  // Si le mot-clé est choisi dans la comboliste, on matche exactement.
-  // Si l'utilisateur tape seulement un morceau, on accepte le partiel.
-  return keywords.some(k => k === q || k.includes(q));
+  // Le filtre mot-clé travaille sur des mots simples : exact si choisi,
+  // partiel si l'utilisateur tape seulement le début d'un mot.
+  return keywords.some(k => k === q || k.startsWith(q));
 }
 
 /* ================= REBUILD FILTERS ================= */

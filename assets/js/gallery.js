@@ -424,27 +424,14 @@ function bindTouchGestures() {
 
   stage.addEventListener("wheel", e => {
     if (!document.getElementById("lightbox")?.classList.contains("open")) return;
-
     e.preventDefault();
-
-    // Ctrl + molette = zoom
-    if (e.ctrlKey) {
-      const delta = e.deltaY < 0 ? 0.15 : -0.15;
-      SCALE = clamp(SCALE + delta, 1, 4);
-
-      if (SCALE === 1) {
-        PAN_X = 0;
-        PAN_Y = 0;
-      }
-
-      applyZoom();
-      return;
+    const delta = e.deltaY < 0 ? 0.15 : -0.15;
+    SCALE = clamp(SCALE + delta, 1, 4);
+    if (SCALE === 1) {
+      PAN_X = 0;
+      PAN_Y = 0;
     }
-
-    // Molette simple = navigation
-    if (e.deltaY > 0) showNext();
-    else showPrev();
-
+    applyZoom();
   }, { passive: false });
 }
 

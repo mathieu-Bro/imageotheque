@@ -64,6 +64,7 @@ function buildItems(data) {
     const folder = rel.split("/").slice(0, -1).join("/");
     const ext = rel.split(".").pop().toLowerCase();
     const kind = mediaKind(rel);
+    const keywords = Array.isArray(i.keywords) ? i.keywords.map(k => String(k || "").trim()).filter(Boolean) : [];
 
     return {
       rel,
@@ -72,6 +73,7 @@ function buildItems(data) {
       folder,
       ext,
       kind,
+      keywords,
       low: mediaUrlFromRel(rel),
       hr: HR_BASE + encodeURI(rel),
       search: (
@@ -85,6 +87,13 @@ function buildItems(data) {
       ).toLowerCase()
     };
   }).filter(i => i.rel && (i.kind === "image" || i.kind === "video"));
+
+  // Index de recherche sans accents, pour que "Émile", "emile", "Emile" donnent le même résultat.
+  if (typeof normalizeSearchText === "function") {
+    ALL_ITEMS.forEach(item => {
+      item.searchNormalized = normalizeSearchText(item.search);
+    });
+  }
 }
 
 function renderGallery(items) {

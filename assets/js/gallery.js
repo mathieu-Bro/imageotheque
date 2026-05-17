@@ -425,13 +425,24 @@ function bindTouchGestures() {
   stage.addEventListener("wheel", e => {
     if (!document.getElementById("lightbox")?.classList.contains("open")) return;
     e.preventDefault();
-    const delta = e.deltaY < 0 ? 0.15 : -0.15;
-    SCALE = clamp(SCALE + delta, 1, 4);
-    if (SCALE === 1) {
-      PAN_X = 0;
-      PAN_Y = 0;
+
+    // PC :
+    // - molette seule : navigation photo précédente / suivante
+    // - Ctrl + molette : zoom in/out
+    if (e.ctrlKey) {
+      const delta = e.deltaY < 0 ? 0.15 : -0.15;
+      SCALE = clamp(SCALE + delta, 1, 4);
+      if (SCALE === 1) {
+        PAN_X = 0;
+        PAN_Y = 0;
+      }
+      applyZoom();
+      return;
     }
-    applyZoom();
+
+    if (Math.abs(e.deltaY) < 8) return;
+    if (e.deltaY > 0) showNext();
+    else showPrev();
   }, { passive: false });
 }
 

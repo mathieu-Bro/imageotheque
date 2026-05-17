@@ -169,7 +169,7 @@ function splitKeywordWords(value) {
   return String(value || "")
     .replace(/\.[a-z0-9]{2,5}$/i, " ")
     .replace(/[\\/]+/g, " ")
-    .replace(/[_.+~()[\]{}\-]+/g, " ")
+    .replace(/[.+~()[\]{}\-]+/g, " ")
     .split(/\s+/)
     .map(w => w.trim())
     .filter(w => w.length >= 2)
@@ -178,42 +178,24 @@ function splitKeywordWords(value) {
     .filter(w => normalizeSearchText(w));
 }
 
-function getLeadingFilenameWords(name) {
-  // Les mots-clés métier sont les mots placés au début du nom.
-  // On s'arrête au premier séparateur fort ou à la première année.
-  const base = String(name || "").replace(/\.[a-z0-9]{2,5}$/i, "");
-  const beforeSeparator = base.split(/\s[-–—_]\s|\s{2,}|[,;|]/)[0] || base;
-  const beforeYear = beforeSeparator.split(/\b(?:19\d{2}|20\d{2})\b/)[0] || beforeSeparator;
-  return splitKeywordWords(beforeYear);
+function getFilenamePrefixKeywords(name) {
+  // Règle métier :
+  // cerf daguet cerises_IMG_20240704_200759.jpg
+  // => mots-clés : cerf, daguet, cerises
+  const base = String(name || "").split("/").pop().replace(/\.[a-z0-9]{2,5}$/i, "");
+  const underscoreIndex = base.indexOf("_");
+
+  // Sans "_" on considère qu'il n'y a pas de zone mots-clés explicite.
+  if (underscoreIndex <= 0) return [];
+
+  const prefix = base.slice(0, underscoreIndex).trim();
+  return splitKeywordWords(prefix);
 }
 
 function getItemKeywords(item) {
-  const words = [];
-
-  // Champs keywords éventuels : on les découpe toujours en mots simples.
-  // Jamais une option du déroulant ne doit contenir un chemin ou un "/" .
-  if (Array.isArray(item.keywords)) {
-    for (const keyword of item.keywords) {
-      words.push(...splitKeywordWords(keyword));
-    }
-  }
-
-  // Mots au début du nom de fichier.
-  words.push(...getLeadingFilenameWords(item.name));
-
-  // Noms de dossiers et sous-dossiers : chaque segment est découpé en mots simples.
-  const folders = String(item.folder || "")
-    .split(/[\\/]+/)
-    .map(part => part.trim())
-    .filter(Boolean);
-
-  for (const folder of folders) {
-    words.push(...splitKeywordWords(folder));
-  }
-
-  // Déduplication par version normalisée, en conservant le premier libellé lisible.
   const map = new Map();
-  for (const word of words) {
+
+  for (const word of getFilenamePrefixKeywords(item.name)) {
     const label = String(word || "").trim();
     const key = normalizeSearchText(label);
     if (!key) continue;
@@ -221,44 +203,6 @@ function getItemKeywords(item) {
   }
 
   return [...map.values()];
-}
-
-function rebuildKeywordDatalist() {
-  const { keywordDatalist } = getElements();
-  if (!keywordDatalist) return;
-
-  const map = new Map();
-
-  for (const item of ALL_ITEMS) {
-    for (const keyword of getItemKeywords(item)) {
-      const label = String(keyword || "").trim();
-      if (!label) continue;
-      const key = normalizeSearchText(label);
-      if (!key) continue;
-      if (!map.has(key)) map.set(key, label);
-    }
-  }
-
-  const values = [...map.values()].sort((a, b) => a.localeCompare(b, "fr", { sensitivity: "base" }));
-  keywordDatalist.innerHTML = "";
-
-  for (const value of values) {
-    const option = document.createElement("option");
-    option.value = value;
-    keywordDatalist.appendChild(option);
-  }
-}
-
-function itemMatchesKeyword(item, rawKeyword) {
-  const q = normalizeSearchText(rawKeyword);
-  if (!q) return true;
-
-  const keywords = getItemKeywords(item).map(k => normalizeSearchText(k)).filter(Boolean);
-  if (!keywords.length) return false;
-
-  // Le filtre mot-clé travaille sur des mots simples : exact si choisi,
-  // partiel si l'utilisateur tape seulement le début d'un mot.
-  return keywords.some(k => k === q || k.startsWith(q));
 }
 
 /* ================= REBUILD FILTERS ================= */

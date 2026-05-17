@@ -646,3 +646,17 @@ button:hover {
     border-radius: 0;
   }
 }
+
+
+.site-credit {
+  margin-top: 0.6rem;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  opacity: 0.9;
+}
+
+.site-credit a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}

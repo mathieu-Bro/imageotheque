@@ -424,25 +424,27 @@ function bindTouchGestures() {
 
   stage.addEventListener("wheel", e => {
     if (!document.getElementById("lightbox")?.classList.contains("open")) return;
+
     e.preventDefault();
 
-    // PC :
-    // - molette seule : navigation photo précédente / suivante
-    // - Ctrl + molette : zoom in/out
+    // Ctrl + molette = zoom
     if (e.ctrlKey) {
       const delta = e.deltaY < 0 ? 0.15 : -0.15;
       SCALE = clamp(SCALE + delta, 1, 4);
+
       if (SCALE === 1) {
         PAN_X = 0;
         PAN_Y = 0;
       }
+
       applyZoom();
       return;
     }
 
-    if (Math.abs(e.deltaY) < 8) return;
+    // Molette simple = navigation
     if (e.deltaY > 0) showNext();
     else showPrev();
+
   }, { passive: false });
 }
 

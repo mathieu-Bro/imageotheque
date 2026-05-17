@@ -160,42 +160,31 @@ function getSearchFilteredBaseItems(force = false) {
 /* ================= KEYWORDS ================= */
 
 function splitKeywordWords(value) {
-  const stop = new Set([
-    "jpg", "jpeg", "png", "gif", "webp", "mp4", "webm", "mov", "m4v", "avi",
-    "photo", "photos", "video", "videos", "image", "images", "hr", "br",
-    "img", "dsc", "scan", "copie", "copy", "thumb", "thumbnail"
-  ]);
-
   return String(value || "")
     .replace(/\.[a-z0-9]{2,5}$/i, " ")
-    .replace(/[\\/]+/g, " ")
-    .replace(/[.+~()[\]{}\-]+/g, " ")
     .split(/\s+/)
     .map(w => w.trim())
-    .filter(w => w.length >= 2)
-    .filter(w => !/^\d+$/.test(w))
-    .filter(w => !stop.has(normalizeSearchText(w)))
-    .filter(w => normalizeSearchText(w));
-}
-
-function getFilenamePrefixKeywords(name) {
-  // Règle métier :
-  // cerf daguet cerises_IMG_20240704_200759.jpg
-  // => mots-clés : cerf, daguet, cerises
-  const base = String(name || "").split("/").pop().replace(/\.[a-z0-9]{2,5}$/i, "");
-  const underscoreIndex = base.indexOf("_");
-
-  // Sans "_" on considère qu'il n'y a pas de zone mots-clés explicite.
-  if (underscoreIndex <= 0) return [];
-
-  const prefix = base.slice(0, underscoreIndex).trim();
-  return splitKeywordWords(prefix);
+    .filter(Boolean)
+    .filter(w => w.length >= 2);
 }
 
 function getItemKeywords(item) {
+  const filename = String(item.name || "");
+  const base = filename.replace(/\.[a-z0-9]{2,5}$/i, "");
+
+  // Exemple :
+  // cerf daguet cerises_IMG_20240704_200759.jpg
+  // => cerf, daguet, cerises
+  const pos = base.indexOf("_");
+
+  if (pos <= 0) return [];
+
+  const prefix = base.substring(0, pos).trim();
+  const words = splitKeywordWords(prefix);
+
   const map = new Map();
 
-  for (const word of getFilenamePrefixKeywords(item.name)) {
+  for (const word of words) {
     const label = String(word || "").trim();
     const key = normalizeSearchText(label);
     if (!key) continue;

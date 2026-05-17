@@ -83,9 +83,9 @@ function updateYearControlsVisibility() {
 
 /* ================= SEARCH QUERY =================
    Syntaxe volontairement simple :
-   - "Émile et Coline" => tous les termes doivent être présents
-   - "Émile ou Coline" => au moins un terme doit être présent
-   - "Émile Coline"    => équivalent à "Émile ou Coline"
+   - "chat et jardin" => tous les termes doivent être présents
+   - "chat ou jardin" => au moins un terme doit être présent
+   - "chat jardin"    => équivalent à "chat ou jardin"
    - les accents et la casse sont ignorés
 */
 

@@ -159,60 +159,51 @@ function getSearchFilteredBaseItems(force = false) {
 
 /* ================= KEYWORDS ================= */
 
+function cleanKeywordWord(word) {
+  return String(word || "")
+    .trim()
+    .replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "");
+}
+
 function splitKeywordWords(value) {
   const stop = new Set([
     "jpg", "jpeg", "png", "gif", "webp", "mp4", "webm", "mov", "m4v", "avi",
     "photo", "photos", "video", "videos", "image", "images", "hr", "br",
-    "img", "dsc", "scan", "copie", "copy", "thumb", "thumbnail"
+    "img", "dsc", "dscn", "vid", "scan", "copie", "copy",
+    "et", "ou", "the", "and"
   ]);
 
   return String(value || "")
-    .replace(/\.[a-z0-9]{2,5}$/i, " ")
-    .replace(/[\\/]+/g, " ")
-    .replace(/[_.+~()[\]{}\-]+/g, " ")
+    // Les vrais mots-clés sont séparés par des espaces.
+    // Les tirets et apostrophes restent dans le mot affiché, mais les bords sont nettoyés.
     .split(/\s+/)
-    .map(w => w.trim())
+    .map(cleanKeywordWord)
+    .filter(Boolean)
     .filter(w => w.length >= 2)
     .filter(w => !/^\d+$/.test(w))
+    .filter(w => !/^(19|20)\d{2}$/.test(w))
     .filter(w => !stop.has(normalizeSearchText(w)))
     .filter(w => normalizeSearchText(w));
 }
 
-function getLeadingFilenameWords(name) {
-  // Les mots-clés métier sont les mots placés au début du nom.
-  // On s'arrête au premier séparateur fort ou à la première année.
-  const base = String(name || "").replace(/\.[a-z0-9]{2,5}$/i, "");
-  const beforeSeparator = base.split(/\s[-–—_]\s|\s{2,}|[,;|]/)[0] || base;
-  const beforeYear = beforeSeparator.split(/\b(?:19\d{2}|20\d{2})\b/)[0] || beforeSeparator;
-  return splitKeywordWords(beforeYear);
-}
-
 function getItemKeywords(item) {
-  const filename = String(item.name || "");
+  const filename = String(item.name || "").split(/[\\/]/).pop();
   const base = filename.replace(/\.[a-z0-9]{2,5}$/i, "");
-  const pos = base.indexOf("_");
 
-  // Règle : seuls les mots avant le premier _ sont des mots-clés.
-  // Exemple : cerf daguet cerises_IMG_20240704_200759.jpg
+  // Règle stricte :
+  // cerf daguet cerises_IMG_20240704_200759.jpg
   // => cerf, daguet, cerises
+  //
+  // On ignore complètement les dossiers/sous-dossiers et les champs JSON "keywords".
+  // Si le nom n'a pas de "_" avec un préfixe avant, il n'a pas de mots-clés.
+  const pos = base.indexOf("_");
   if (pos <= 0) return [];
 
-  const prefix = base.substring(0, pos).trim();
-  const stop = new Set([
-    "jpg", "jpeg", "png", "gif", "webp", "mp4", "webm", "mov", "m4v", "avi",
-    "photo", "photos", "video", "videos", "image", "images", "hr", "br",
-    "img", "dsc", "scan", "copie", "copy"
-  ]);
+  const prefix = base.slice(0, pos).trim();
+  if (!prefix) return [];
 
   const map = new Map();
-  const words = prefix
-    .split(/\s+/)
-    .map(w => w.trim())
-    .filter(w => w.length >= 2)
-    .filter(w => !/^\d+$/.test(w))
-    .filter(w => !stop.has(normalizeSearchText(w)));
-
-  for (const word of words) {
+  for (const word of splitKeywordWords(prefix)) {
     const key = normalizeSearchText(word);
     if (!key) continue;
     if (!map.has(key)) map.set(key, word);

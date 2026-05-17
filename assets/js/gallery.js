@@ -248,6 +248,35 @@ function applyZoom() {
   if (video) video.style.transform = transform;
 }
 
+function zoomAtPoint(clientX, clientY, newScale) {
+  const stage = document.getElementById("lightboxStage") || document.querySelector(".lightbox-stage");
+  if (!stage) {
+    SCALE = newScale;
+    applyZoom();
+    return;
+  }
+
+  const oldScale = SCALE || 1;
+  const rect = stage.getBoundingClientRect();
+
+  // Coordonnées de la souris par rapport au centre de la zone d'affichage.
+  const x = clientX - rect.left - rect.width / 2;
+  const y = clientY - rect.top - rect.height / 2;
+
+  // Préserve sous la souris le même point de l'image pendant le changement d'échelle.
+  PAN_X = x - (x - PAN_X) * (newScale / oldScale);
+  PAN_Y = y - (y - PAN_Y) * (newScale / oldScale);
+  SCALE = newScale;
+
+  if (SCALE <= 1) {
+    SCALE = 1;
+    PAN_X = 0;
+    PAN_Y = 0;
+  }
+
+  applyZoom();
+}
+
 function showMedia() {
   const item = CURRENT_ITEMS[CURRENT_INDEX];
   if (!item) return;
@@ -429,13 +458,9 @@ function bindTouchGestures() {
     e.preventDefault();
 
     if (e.ctrlKey) {
-      const delta = e.deltaY < 0 ? 0.15 : -0.15;
-      SCALE = clamp(SCALE + delta, 1, 4);
-      if (SCALE === 1) {
-        PAN_X = 0;
-        PAN_Y = 0;
-      }
-      applyZoom();
+      const factor = e.deltaY < 0 ? 1.18 : 1 / 1.18;
+      const newScale = clamp(SCALE * factor, 1, 4);
+      zoomAtPoint(e.clientX, e.clientY, newScale);
       return;
     }
 

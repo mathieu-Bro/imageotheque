@@ -4,6 +4,7 @@ let LAST_BASE_ITEMS = [];
 function getElements() {
   return {
     searchInput: document.getElementById("searchInput"),
+    mediaTypeSelect: document.getElementById("mediaTypeSelect"),
     yearModeSelect: document.getElementById("yearModeSelect"),
     yearFromSelect: document.getElementById("yearFromSelect"),
     yearToSelect: document.getElementById("yearToSelect"),
@@ -28,6 +29,8 @@ function bindEvents() {
     update();
   };
 
+  el.mediaTypeSelect.onchange = update;
+
   el.yearModeSelect.onchange = () => {
     updateYearControlsVisibility();
     update(); // ⚠️ pas de rebuild ici → gain de perf
@@ -41,6 +44,7 @@ function bindEvents() {
 
   el.resetButton.onclick = () => {
     el.searchInput.value = "";
+    el.mediaTypeSelect.value = "";
     el.yearModeSelect.value = "";
     el.yearFromSelect.value = "";
     el.yearToSelect.value = "";
@@ -182,6 +186,7 @@ function getFilteredItems() {
 
   let items = ALL_ITEMS.filter(item =>
     (!q || item.search.includes(q)) &&
+    (!el.mediaTypeSelect.value || item.kind === el.mediaTypeSelect.value) &&
     yearMatches(item) &&
     (!el.folderSelect.value || item.folder === el.folderSelect.value) &&
     (!el.extensionSelect.value || item.ext === el.extensionSelect.value)

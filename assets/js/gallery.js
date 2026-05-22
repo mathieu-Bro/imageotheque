@@ -2,6 +2,7 @@ const MEDIA_BASE = "https://pub-db2a1779ddaf4b0e84459e8e958e34de.r2.dev/";
 const LOW_BASE = MEDIA_BASE + "photos/";
 const HR_BASE  = MEDIA_BASE + "photos_HR/";
 const VIDEO_BASE = MEDIA_BASE + "video/";
+const VIDEOS_BASE = MEDIA_BASE + "videos/";
 
 const IMAGE_EXT = ["jpg", "jpeg", "png", "gif", "webp"];
 const VIDEO_EXT = ["mp4", "webm", "mov", "m4v", "avi"];
@@ -55,8 +56,43 @@ function extractYear(text) {
 }
 
 function mediaUrlFromRel(rel, kind) {
-  if (kind === "video") return VIDEO_BASE + encodeURI(rel);
+  if (kind === "video") return videoUrlsFromRel(rel)[0];
   return LOW_BASE + encodeURI(rel);
+}
+
+function videoUrlsFromRel(rel) {
+  const encoded = encodeURI(rel);
+  // On teste plusieurs emplacements possibles, car selon les exports les vidéos peuvent être
+  // soit dans /video/, soit /videos/, soit encore dans /photos/ pour les anciens fichiers.
+  return [...new Set([
+    VIDEO_BASE + encoded,
+    VIDEOS_BASE + encoded,
+    LOW_BASE + encoded,
+    MEDIA_BASE + encoded
+  ])];
+}
+
+function setVideoWithFallback(video, urls, onOk, onFail) {
+  let pos = 0;
+
+  function tryNext() {
+    if (pos >= urls.length) {
+      if (typeof onFail === "function") onFail();
+      return;
+    }
+
+    video.pause();
+    video.removeAttribute("src");
+    video.src = urls[pos++];
+    video.load();
+  }
+
+  video.onloadedmetadata = () => {
+    if (typeof onOk === "function") onOk();
+  };
+
+  video.onerror = tryNext;
+  tryNext();
 }
 
 function buildItems(data) {
@@ -154,15 +190,18 @@ function appendGalleryBatch(token, batchSize) {
       video.muted = true;
       video.playsInline = true;
       video.preload = "metadata";
-      video.src = item.low;
-      video.onloadedmetadata = () => {
-        card.classList.remove("loading-card");
-        card.classList.add("loaded-card");
-      };
-      video.onerror = () => {
-        loader.innerHTML = "<span>Vidéo indisponible</span>";
-        card.classList.add("image-error");
-      };
+      setVideoWithFallback(
+        video,
+        item.videoUrls || [item.low],
+        () => {
+          card.classList.remove("loading-card");
+          card.classList.add("loaded-card");
+        },
+        () => {
+          loader.innerHTML = "<span>Vidéo indisponible</span>";
+          card.classList.add("image-error");
+        }
+      );
       card.appendChild(video);
 
       const badge = document.createElement("div");
@@ -310,13 +349,15 @@ function showMedia() {
   if (item.kind === "video") {
     img.removeAttribute("src");
     img.alt = "";
-    video.src = item.low;
-    video.onloadedmetadata = () => {
-      video.classList.add("visible");
-      overlay.classList.remove("loading");
-    };
-    video.onerror = () => overlay.classList.remove("loading");
-    video.load();
+    setVideoWithFallback(
+      video,
+      item.videoUrls || [item.low],
+      () => {
+        video.classList.add("visible");
+        overlay.classList.remove("loading");
+      },
+      () => overlay.classList.remove("loading")
+    );
   } else {
     img.onload = () => img.classList.add("visible");
     img.src = item.low;

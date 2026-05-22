@@ -1,6 +1,7 @@
 const MEDIA_BASE = "https://pub-db2a1779ddaf4b0e84459e8e958e34de.r2.dev/";
 const LOW_BASE = MEDIA_BASE + "photos/";
 const HR_BASE  = MEDIA_BASE + "photos_HR/";
+const VIDEO_BASE = MEDIA_BASE + "video/";
 
 const IMAGE_EXT = ["jpg", "jpeg", "png", "gif", "webp"];
 const VIDEO_EXT = ["mp4", "webm", "mov", "m4v", "avi"];
@@ -37,7 +38,8 @@ function normalize(path) {
     .replace(/\\/g, "/")
     .replace(/^\/+/, "")
     .replace(/^photos_HR\//i, "")
-    .replace(/^photos\//i, "");
+    .replace(/^photos\//i, "")
+    .replace(/^videos?\//i, "");
 }
 
 function mediaKind(path) {
@@ -52,7 +54,8 @@ function extractYear(text) {
   return match ? match[1] : "";
 }
 
-function mediaUrlFromRel(rel) {
+function mediaUrlFromRel(rel, kind) {
+  if (kind === "video") return VIDEO_BASE + encodeURI(rel);
   return LOW_BASE + encodeURI(rel);
 }
 
@@ -74,8 +77,8 @@ function buildItems(data) {
       ext,
       kind,
       keywords,
-      low: mediaUrlFromRel(rel),
-      hr: HR_BASE + encodeURI(rel),
+      low: mediaUrlFromRel(rel, kind),
+      hr: kind === "image" ? HR_BASE + encodeURI(rel) : "",
       search: (
         JSON.stringify(i) + " " +
         rel + " " +

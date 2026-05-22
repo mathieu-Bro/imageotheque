@@ -1,0 +1,49 @@
+<section class="filters-panel">
+  <div class="filters-row filters-row-main">
+
+    <input id="searchInput" type="search" placeholder="Recherche : chat et jardin / chat ou jardin / chat jardin">
+
+    <input id="keywordInput" type="search" list="keywordDatalist" placeholder="Mot-clé : choisir ou taper un mot…">
+    <datalist id="keywordDatalist"></datalist>
+
+    <select id="mediaTypeSelect">
+      <option value="">Photos et vidéos</option>
+      <option value="image">Photos seulement</option>
+      <option value="video">Vidéos seulement</option>
+    </select>
+
+    <select id="yearModeSelect">
+      <option value="">Toutes les années</option>
+      <option value="before">Avant</option>
+      <option value="after">Après</option>
+      <option value="between">Entre</option>
+      <option value="exact">Année exacte</option>
+    </select>
+
+    <select id="yearFromSelect">
+      <option value="">Année</option>
+    </select>
+
+    <select id="yearToSelect">
+      <option value="">Et...</option>
+    </select>
+
+    <select id="extensionSelect">
+      <option value="">Tous les types</option>
+    </select>
+
+    <select id="folderSelect">
+      <option value="">Tous les dossiers</option>
+    </select>
+
+    <select id="sortSelect">
+      <option value="folder">Tri par dossier</option>
+      <option value="year">Tri par année</option>
+      <option value="name">Tri par nom</option>
+      <option value="extension">Tri par type</option>
+    </select>
+
+    <button id="resetButton" type="button">Réinitialiser</button>
+
+  </div>
+</section>
